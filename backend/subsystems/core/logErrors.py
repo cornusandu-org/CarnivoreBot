@@ -10,9 +10,12 @@ class LogErrors:
 
     def __exit__(self, exc_type, exc_value, traceback):
         if exc_value != None:
-            if self.critical:
-                self.logger.critical(exc_value, exc_info = True, stack_info = True, stacklevel = 3)
-            else:
-                self.logger.error(exc_value, exc_info = True, stack_info = True, stacklevel = 3)
+            try:
+                raise exc_value
+            except exc_type:
+                if self.critical:
+                    self.logger.critical(exc_value, exc_info = True, stack_info = True, stacklevel = 3)
+                else:
+                    self.logger.error(exc_value, exc_info = True, stack_info = True, stacklevel = 3)
 
         return False
