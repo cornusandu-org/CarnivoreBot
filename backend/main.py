@@ -6,9 +6,8 @@ import subsystems.core.suppressErrors as suppressErrors
 async def main():
     a = assetManager.AssetManager()
     
-    with suppressErrors.SuppressErrors():
-        with logErrors.LogErrors('test', True):
-            featManager.start_feat(None)
+    with logErrors.LogErrors('mainInitFeat', True):
+        featManager.start_feat(None)
 
     a.settings
 
