@@ -1,0 +1,7 @@
+[Discord.App]
+ApplicationID = "1519382220823986277"
+PublicKey = "87ea754c944b0fe05c25319ba66433b8e7725e37055f2adf08dfea4f7f0a2bfd"
+
+[Discord.App.Auth]
+DevPass = "."
+AuthToken = "."
