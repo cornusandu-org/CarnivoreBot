@@ -5,13 +5,15 @@
   "scripts": {
     "build": "tsc",
     "runjs": "npm i && npm run build && node dist/index.js",
-    "runpy": "uv sync && python backend/main.py"
+    "runpy": "uv sync && python backend/main.py",
+    "runall": "concurrently --kill-others-on-fail --names JS,PY \"npm run runjs\" \"npm run runpy\""
   },
   "author": "",
   "license": "GPL-3.0-or-later",
   "description": "",
   "devDependencies": {
     "@types/node": "^26.0.0",
+    "concurrently": "^9.2.3",
     "smol-toml": "^1.7.0",
     "typescript": "^6.0.3"
   },

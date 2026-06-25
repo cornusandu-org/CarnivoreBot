@@ -9,7 +9,7 @@ logger = logManager.getLogger("featManager")
 features = []
 features_lock = RLock()
 
-def start_feat(name: str, target, daemon: bool = True) -> threading.Thread:
+def start_feat(name: str, target: type, daemon: bool = True) -> threading.Thread:
     if sys._is_gil_enabled():
         logger.warning("The GIL is enabled. This may result in lower multithreaded performance.")
 
@@ -37,7 +37,7 @@ def start_feat(name: str, target, daemon: bool = True) -> threading.Thread:
         finally:
             loop.close()
 
-    newThread = threading.Thread(target = wrapper, name = name, daemon = daemon)
+    newThread = threading.Thread(target = wrapper, name = "Feat:" + name + "Thread", daemon = daemon)
     newThread.start()
 
     return newThread
