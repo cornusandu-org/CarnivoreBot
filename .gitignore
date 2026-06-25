@@ -1,8 +1,5 @@
-node_modules/
 config.toml
 *.tar
 .venv/
-package-lock.json
 uv.lock
 *__pycache__/
-dist/
