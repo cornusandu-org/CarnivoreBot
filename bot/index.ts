@@ -1,9 +1,6 @@
 import { Client, Events, GatewayIntentBits } from 'discord.js';
-import * as toml from 'smol-toml';
-import * as fs from 'fs';
-
-const _settingRawString = fs.readFileSync("config.toml", { encoding: 'utf8' });
-const settings = toml.parse(_settingRawString) as Record<string, any>;
+import { settings } from './core/getSettings.js';
+import { callBackend } from './core/callBackend.js';
 
 const client = new Client({ intents: [
     GatewayIntentBits.Guilds,
@@ -18,15 +15,19 @@ client.once(Events.ClientReady, (readyClient) => {
 });
 
 client.on(Events.MessageCreate, async message => {
-    // Ignore messages from bots or messages that do not start with the prefix
     if (message.author.bot || !message.content.startsWith(PREFIX)) return;
 
-    // Split the message into the command and arguments array
     const args = message.content.slice(PREFIX.length).trim().split(/ +/);
     const commandName = args.shift()!.toLowerCase();
 
-    // Command Handling
     if (commandName === 'ping') {
+        const ratelimit: any = await callBackend('/api/userRatelimits/pingPong', 'GET', { 'userId': message.author.id });
+        if (ratelimit.timeLeft > 0) {
+            console.error(`PING RATELIMIT REACHED`);
+            return;
+        }
+        await callBackend('/api/userRatelimits/pingPong', 'POST', { 'userId': message.author.id });
+        await callBackend('/api/userRatelimits/pingPong', 'REFRESH', {});
         await message.channel.send('Pong!');
     } 
     

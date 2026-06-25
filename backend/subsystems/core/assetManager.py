@@ -3,6 +3,7 @@ from . import logManager
 
 logger = logManager.getLogger("assetManager")
 
+@lambda _: _()
 class AssetManager:
     def __init__(self):
         logger.info('Initialising...')
@@ -11,17 +12,17 @@ class AssetManager:
 
     @cached_property
     def backendPath(self):
-        logger.info('Dereferencing backendPath')
+        logger.debug('Dereferencing backendPath')
         return self.rootPath / "backend"
     
     @cached_property
     def corePath(self):
-        logger.info('Dereferencing corePath')
+        logger.debug('Dereferencing corePath')
         return self.backendPath / "core"
     
     @cached_property
     def settings(self):
-        logger.info('Dereferencing settings')
+        logger.debug('Dereferencing settings')
         try:
             with open(self.rootPath / "config.toml", 'rb') as f:
                 return toml.load(f)

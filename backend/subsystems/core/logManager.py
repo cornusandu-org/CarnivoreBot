@@ -1,6 +1,8 @@
 from .dependencies import logging, colorama
 from datetime import datetime
 
+logging.getLogger("werkzeug").setLevel(logging.ERROR);
+
 SUCCESS = 25
 logging.addLevelName(SUCCESS, "SUCCESS");
 
