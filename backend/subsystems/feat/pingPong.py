@@ -20,8 +20,9 @@ class PingPongCommand:
     async def onRunCommand(self, message: Message) -> None:
         userId = message.author.id
 
-        if (ratelimit := await rateLimitManager.getRateLimit(userId, "ping")) >= 0:
-            await message.reply(f"You are being rate limited. Please wait {ratelimit.seconds} seconds before trying again.")
+        with LogErrors('pingPong'):
+            if (ratelimit := await rateLimitManager.getRateLimit(userId, "ping")) > timedelta():
+                await message.reply(f"You are being rate limited. Please wait {ratelimit.seconds} seconds before trying again.")
 
         await message.reply("Pong!")
 

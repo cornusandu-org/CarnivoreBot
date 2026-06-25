@@ -19,7 +19,7 @@ async def startClient(cl: discord.Client, token: str):
     client.event(on_ready)
     client.event(on_message)
     
-    with LogErrors('dcClient'):
+    with LogErrors('dcClient', True):
         logger.debug("Starting bot...")
         await client.start(token)
 
@@ -28,15 +28,16 @@ async def on_ready():
     logger.success(f"Started bot: {client.user.name} (#{client.user.id})")
 
 async def on_message(message: discord.Message):
-    logger.debug(f'Recieved message: {message.content}')
+    #logger.debug(f'Recieved message: {message.content}')
     for listener in listeners['onMessage']:
-        await listener(message)
+        with LogErrors('dcClient:on_message'):
+            await listener(message)
 
 def registerCommand(cmd: str, handler: Callable[[discord.Message], Coroutine], includePrefix: bool = True):
     logger.debug(f"Registered command: '{cmd}'. Prefix: {'enabled' if includePrefix else 'disabled'}")
 
     async def wrapper(message: discord.Message):
-        prefix = AssetManager.settings.Discord.Command.Prefix if includePrefix else ''
+        prefix = AssetManager.settings['Discord']['Command']['Prefix'] if includePrefix else ''
         
         if not message.content.startswith(prefix):
             return

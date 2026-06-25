@@ -17,7 +17,7 @@ export class PingPongCommand {
 
         if (commandName === 'ping') {
             const ratelimit: any = await callBackend('/api/userRatelimits/pingPong', 'GET', { 'userId': message.author.id });
-            if (ratelimit.timeLeft > 0) {
+            if (ratelimit.timeLeft > timedelta()) {
                 console.error(`PING RATELIMIT REACHED`);
                 return;
             }

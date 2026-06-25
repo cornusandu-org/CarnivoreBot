@@ -1,12 +1,9 @@
 from . import logManager
 
 class LogErrors:
-    def __init__(self, name = None, critical: bool = False) -> None:
+    def __init__(self, name: str = "Unknown", critical: bool = False) -> None:
         self.logger = logManager.getLogger(f"LogErrors: {name}")
         self.critical = critical
-
-        if name is None:
-            self.logger.error("No name provided.")
 
     def __enter__(self) -> None:
         return

@@ -13,6 +13,9 @@ async def getRateLimit(target: str | int | Any, command: str) -> timedelta:
     with SuppressErrors(), LogErrors():
         targetTime = await RDM.readData(f"rateLimitManager:{command}", target)
 
+        if targetTime is None:
+            return timedelta()
+
         if datetime.now() >= targetTime:
             return timedelta()
 
