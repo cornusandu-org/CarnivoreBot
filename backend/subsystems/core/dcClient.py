@@ -28,7 +28,6 @@ async def on_ready():
     logger.success(f"Started bot: {client.user.name} (#{client.user.id})")
 
 async def on_message(message: discord.Message):
-    #logger.debug(f'Recieved message: {message.content}')
     for listener in listeners['onMessage']:
         with LogErrors('dcClient:on_message'):
             await listener(message)
@@ -45,6 +44,8 @@ def registerCommand(cmd: str, handler: Callable[[discord.Message], Coroutine], i
         if not message.content.startswith(f"{prefix}{cmd}"):
             logger.warning(f"Ignoring command: '{message.content}'. Cause: No handler installed.")
             return
+        
+        logger.debug(f"Command {prefix}{cmd} was called: '{message.content}'")
 
         await handler(message)
         

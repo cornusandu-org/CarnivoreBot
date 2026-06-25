@@ -3,3 +3,5 @@ config.toml
 .venv/
 uv.lock
 *__pycache__/
+build/
+carnivorebot.egg-info/
