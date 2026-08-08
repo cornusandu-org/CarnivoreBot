@@ -1,13 +1,42 @@
+from collections.abc import Coroutine
 import threading
-from .dependencies import sys
+from .dependencies import sys, Callable, fntools, queue, Any
 from . import logManager
 import asyncio
 from threading import RLock
+import typing
 
 logger = logManager.getLogger("featManager")
 
 features = []
 features_lock = RLock()
+
+def queuedFunctionAsync():
+    def decorator(fn: Callable[..., Coroutine]) -> Callable:
+        fn.queue = queue.Queue()
+
+        @fntools.wraps(fn)
+        async def wrapper(*args, **kwargs):
+            fn.queue.put_nowait((args, kwargs))
+            if fn.queue.qsize() >= 32:
+                raise Exception("Queue too big.")
+
+        async def runForever(*args, **kwargs):
+            while True:
+                (args, kwargs) = await asyncio.to_thread(fn.queue.get)
+                loop = asyncio.get_event_loop()
+                loop.create_task(fn(*args, **kwargs))
+                fn.queue.task_done()
+
+        wrapper.runForever = runForever
+
+        return wrapper
+
+    return decorator
+
+def detachAsync(cr: Coroutine) -> asyncio.Task:
+    loop = asyncio.get_event_loop()
+    return loop.create_task(cr)
 
 def start_feat(name: str, target: type, daemon: bool = True) -> threading.Thread:
     if sys._is_gil_enabled():

@@ -1,11 +1,39 @@
-from threading import RLock
+from threading import RLock, Thread
+import threading
 from .suppressErrors import SuppressErrors
 from .logErrors import LogErrors
+from .logManager import getLogger
+from time import sleep
+import sys
 
 import copy
 
 data: dict[str, dict[any, any]] = {}
+subsystem_size_limits: dict[str, int] = {}
 data_lock = RLock()
+
+def deepSize(value: dict | list, seen: set[int] | None = None) -> int:
+    if seen is None:
+        seen = set()
+
+    if isinstance(value, list):
+        return sum(map(lambda x: deepSize(x), value)) + sys.getsizeof(value)
+    elif isinstance(value, dict):
+        size = sys.getsizeof(value)
+
+        for key in value.keys():
+            size += sys.getsizeof(key)
+
+        for value in value.values():
+            size += deepSize(value, seen)
+
+        return size
+    elif isinstance(value, tuple):
+        return sum(map(lambda x: deepSize(x), value)) + sys.getsizeof(value)
+    elif isinstance(value, set):
+        return sum(map(lambda x: deepSize(x), value)) + sys.getsizeof(value)
+    else:
+        return sys.getsizeof(value)
 
 async def readData(subsystem: str, key: any) -> any:
     with data_lock:
@@ -34,3 +62,16 @@ async def popData(subsystem: str, key: any) -> None:
         if (v := data.get(subsystem)) is not None:
             with SuppressErrors(), LogErrors():
                 v.pop(key)
+
+def newThread():
+    logger = getLogger("runtimeDataManager")
+    while True:
+        sleep(5)
+        for (name, subsystem) in data.items():
+            if deepSize(subsystem) >= subsystem_size_limits.get(name, 512) * 15:
+                logger.critical(f"Size of runtime data subsystem {name} exceeds the limit of {subsystem_size_limits.get(name, 512)}B by 15x (or more), currently occupying {deepSize(subsystem)}B")
+            elif deepSize(subsystem) >= subsystem_size_limits.get(name, 512):
+                logger.warning(f"Size of runtime data subsystem {name} exceeds the limit of {subsystem_size_limits.get(name, 512)}B, currently occupying {deepSize(subsystem)}B")
+
+if threading.current_thread() is threading.main_thread():
+    Thread(target=newThread, name="runtimeDataManagerThread", daemon=True).start()

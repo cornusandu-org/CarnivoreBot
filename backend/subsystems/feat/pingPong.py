@@ -3,7 +3,7 @@ from ..core.suppressErrors import SuppressErrors
 from ..core.logErrors import LogErrors
 from ..core.assetManager import AssetManager
 from ..core import rateLimitManager
-from ..core.featManager import start_feat
+from ..core.featManager import start_feat, queuedFunctionAsync, detachAsync
 from ..core import dcClient
 
 from datetime import datetime, timedelta
@@ -15,16 +15,21 @@ class PingPongCommand:
         dcClient.registerCommand("ping", self.onRunCommand)
 
     async def init(self):
-        pass
+        await rateLimitManager.createRateLimit("ping")
+        detachAsync(self.onRunCommand.runForever())
 
+    @queuedFunctionAsync()
     async def onRunCommand(self, message: Message) -> None:
         userId = message.author.id
 
+        await rateLimitManager.refreshRateLimits("ping")
+
         with LogErrors('pingPong'):
             if (ratelimit := await rateLimitManager.getRateLimit(userId, "ping")) > timedelta():
-                await message.reply(f"You are being rate limited. Please wait {ratelimit.seconds} seconds before trying again.")
+                await dcClient.runDiscord(message.reply(f"You are being rate limited. Please wait {ratelimit.seconds} seconds before trying again."))
+                return
 
-        await message.reply("Pong!")
+        await dcClient.runDiscord(message.reply("Pong!"))
 
         await rateLimitManager.addRateLimit(userId, "ping", timedelta(seconds=2))
 

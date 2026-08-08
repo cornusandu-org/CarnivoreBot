@@ -3,6 +3,8 @@ from .logManager import getLogger
 from .logErrors import LogErrors
 from .assetManager import AssetManager
 from typing import Callable, Coroutine, Literal
+import asyncio as aio
+from collections.abc import Coroutine
 
 logger = getLogger("dcClient")
 
@@ -12,12 +14,17 @@ listeners = {
     'onMessage': []
 }
 
+discordLoop: aio.EventLoop = None
+
 async def startClient(cl: discord.Client, token: str):
     global client
     client = cl
 
     client.event(on_ready)
     client.event(on_message)
+
+    global discordLoop
+    discordLoop = aio.get_event_loop()
     
     with LogErrors('dcClient', True):
         logger.debug("Starting bot...")
@@ -53,3 +60,7 @@ def registerCommand(cmd: str, handler: Callable[[discord.Message], Coroutine], i
 
 def registerHandler(event: Literal['onMessage'], handler: Callable[[discord.Message], Coroutine]):
     listeners[event].append(handler)
+
+def runDiscord(cr: Coroutine) -> aio.Future:
+    global discordLoop
+    return aio.wrap_future(aio.run_coroutine_threadsafe(cr, discordLoop))

@@ -4,6 +4,17 @@ from datetime import datetime, timedelta
 from .dependencies import Any
 from .logErrors import LogErrors
 from .suppressErrors import SuppressErrors
+from threading import RLock
+import threading
+
+ratelimit_commands = []
+ratelimit_commands_lock = RLock()
+
+async def createRateLimit(command: str) -> None:
+    with ratelimit_commands_lock:
+        ratelimit_commands.append(command)
+    
+    await RDM.writeSubsystem(f"rateLimitManager:{command}", {})
 
 async def addRateLimit(target: str | int | Any, command: str, time: timedelta) -> None:
     with SuppressErrors(), LogErrors():
@@ -37,3 +48,20 @@ async def refreshRateLimits(command: str) -> bool:
         
     except Exception as e:
         return False
+
+import time
+import asyncio
+
+async def newThread():
+    logger = getLogger("rateLimitManager")
+
+    while True:
+        time.sleep(25)
+
+        with ratelimit_commands_lock:
+            for name in ratelimit_commands:
+                logger.debug(f"Refreshing rate limits for: '{name}'")
+                await refreshRateLimits(name)
+
+if threading.current_thread() is threading.main_thread():
+    threading.Thread(target=lambda: asyncio.run(newThread()), name="rateLimitManagerThread", daemon=True).start()

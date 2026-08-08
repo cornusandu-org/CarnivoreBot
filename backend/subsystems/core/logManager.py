@@ -21,14 +21,18 @@ class ColorFormatter(logging.Formatter):
     def format(self, record):
         timestamp = datetime.fromtimestamp(
             record.created
-        ).astimezone().isoformat(timespec="milliseconds")
+        ).astimezone().isoformat(timespec="seconds", sep=" ").split("+")[0]
 
         color = self.COLORS.get(record.levelno, "")
+        filecolor = colorama.Fore.MAGENTA
 
         output = (
             f"{color}"
             f"{timestamp}\t"
-            f"[{record.levelname.center(8)}]\t"
+            f"[{record.levelname.center(8)}]    "
+            f"{filecolor}"
+            f"{record.filename.ljust(16 if len(record.filename) <= 16 else 22)}  "
+            f"{color}"
             f"{record.threadName}: "
             f"{record.name}: "
             f"{record.getMessage()}"
@@ -43,19 +47,24 @@ class ColorFormatter(logging.Formatter):
 
         return output
     
-def getLogger(name: str):
+def getLogger(name: str) -> logging.Logger:
+    if not name:
+        print("???")
+
     handler = logging.StreamHandler()
     handler.setLevel(logging.DEBUG)
     handler.setFormatter(ColorFormatter())
 
     logger = logging.getLogger(name)
-    logger.addHandler(handler)
+    if not logger.handlers:
+        logger.addHandler(handler)
 
     def success(message, *args, **kwargs):
         if logger.isEnabledFor(SUCCESS):
             logger._log(SUCCESS, message, args, **kwargs)
 
     logger.success = success
+    logger.propagate = False
     logger.setLevel(logging.DEBUG)
 
     return logger
