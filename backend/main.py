@@ -1,6 +1,8 @@
 from subsystems.core import rateLimitManager
 
 from subsystems.feat import pingPong
+from subsystems.feat import checkIsSpam
+
 from subsystems.core.dcClient import startClient
 from subsystems.core.assetManager import AssetManager
 import discord
@@ -18,6 +20,7 @@ async def main():
     bot = discord.Client(intents = intents)
 
     pingPong.InitialisePingPongCommand()
+    checkIsSpam.InitialiseCheckIsSpamCommand()
 
     await startClient(bot, AssetManager.settings['Discord']['App']['Auth']['AuthToken'])
     await asyncio.Event().wait()
